@@ -1,0 +1,566 @@
+### ===========================================
+### SCÉNARIOS DE TEST SPÉCIFIQUES
+### ===========================================
+
+@baseUrl = http://127.0.0.1:8000
+@contentType = application/json
+
+@token = faa1dacabc44354328f5f4cb60f7ed167d631bae
+@adminToken = b68fac63299b1a114d80a511499d55a7d80a0e9b
+### ===========================================
+### SCÉNARIO 1: Test du système de recommandation
+### ===========================================
+
+### 1. Obtenir la liste des produits pour choisir un ID
+GET {{baseUrl}}/api/products/?page_size=5
+
+### 2. Tester les recommandations pour le premier produit
+GET {{baseUrl}}/api/products/P001/recommendations/
+
+### 3. Tester avec différents produits
+GET {{baseUrl}}/api/products/P002/recommendations/
+GET {{baseUrl}}/api/products/P003/recommendations/
+
+### ===========================================
+### SCÉNARIO 2: Test des filtres de produits
+### ===========================================
+
+### Tous les produits
+GET {{baseUrl}}/api/products/
+
+### Par catégorie
+GET {{baseUrl}}/api/products/?category=Smartphones
+
+### Par prix
+GET {{baseUrl}}/api/products/?min_price=20000&max_price=100000
+
+### Recherche textuelle
+GET {{baseUrl}}/api/products/?search=iPhone
+
+### Tri par note décroissante
+GET {{baseUrl}}/api/products/?ordering=-ratings
+
+### ===========================================
+### SCÉNARIO 3: Test complet e-commerce
+### ===========================================
+
+### 1. Inscription
+POST {{baseUrl}}/api/auth/register/
+Content-Type: {{contentType}}
+
+{
+  "username": "ecommerce_test",
+  "email": "ecommerce@test.com",
+  "first_name": "E-commerce",
+  "last_name": "Tester",
+  "password": "ecommerce123",
+  "password_confirm": "ecommerce123"
+}
+
+### 2. Connexion (noter le token)
+POST {{baseUrl}}/api/auth/login/
+Content-Type: {{contentType}}
+
+{
+  "email": "ecommerce@test.com",
+  "password": "ecommerce123"
+}
+
+### 2. Connexion Admin (noter le token)
+POST {{baseUrl}}/api/auth/login/
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@admin.sn",
+  "password": "admin"
+}
+
+
+### 3. Parcourir et ajouter plusieurs produits au panier
+POST {{baseUrl}}/api/cart/
+Authorization: Token {{token}}
+Content-Type: {{contentType}}
+
+{
+  "product_id": "P001",
+  "quantity": 2
+}
+
+###
+POST {{baseUrl}}/api/cart/
+Authorization: Token {{token}}
+Content-Type: {{contentType}}
+
+{
+  "product_id": "P002",
+  "quantity": 1
+}
+
+### 4. Vérifier le panier
+GET {{baseUrl}}/api/cart/
+Authorization: Token {{token}}
+
+### 5. Passer commande
+POST {{baseUrl}}/api/orders/
+Authorization: Token {{token}}
+Content-Type: {{contentType}}
+
+{
+  "shipping_address": {
+    "name": "E-commerce Tester",
+    "street": "123 Commerce Street",
+    "city": "Paris",
+    "postal_code": "75001",
+    "country": "France",
+    "phone": "0123456789"
+  },
+  "shipping_cost": 9.99,
+  "tax_amount": 20.00
+}
+
+### ===========================================
+### SCÉNARIO 4: Test des interactions utilisateur
+### ===========================================
+
+### Simuler un parcours utilisateur avec interactions
+### 1. Vue de produit
+POST {{baseUrl}}/api/interactions/
+Authorization: Token {{token}}
+Content-Type: {{contentType}}
+
+{
+  "product_id": "P001",
+  "interaction_type": "view"
+}
+
+### 2. Like du produit
+POST {{baseUrl}}/api/interactions/
+Authorization: Token {{token}}
+Content-Type: {{contentType}}
+
+{
+  "product_id": "P001",
+  "interaction_type": "like"
+}
+
+### 3. Noter le produit
+POST {{baseUrl}}/api/interactions/
+Authorization: Token {{token}}
+Content-Type: {{contentType}}
+
+{
+  "product_id": "P001",
+  "interaction_type": "rating",
+  "rating": 4.5
+}
+
+### 4. Voir les recommandations personnalisées après interactions
+GET {{baseUrl}}/api/recommendations/user/
+Authorization: Token {{token}}
+
+### ===========================================
+### SCÉNARIO 5: Test de performance et limites
+### ===========================================
+
+### Test pagination avec grande page
+GET {{baseUrl}}/api/products/?page_size=100
+
+### Test de recherche complexe
+GET {{baseUrl}}/api/products/?search=smartphone&category=Electronics&min_price=10000&max_price=80000&ordering=-ratings
+
+### Test recommandations multiples
+### P001
+GET {{baseUrl}}/api/products/P001/recommendations/
+
+### P002
+GET {{baseUrl}}/api/products/P002/recommendations/
+
+### P003
+GET {{baseUrl}}/api/products/P003/recommendations/
+
+### P004
+GET {{baseUrl}}/api/products/P004/recommendations/
+
+### P005
+GET {{baseUrl}}/api/products/P005/recommendations/
+
+### ===========================================
+### SCÉNARIO 6: Explications et métriques
+### ===========================================
+
+### Recommandations avec explications (produit -> explications: catégorie/marque/overlap/Δprix + similarity_score)
+GET {{baseUrl}}/api/products/P002/recommendations/
+
+### Recommandations personnalisées avec explications (nécessite interactions et auth)
+GET {{baseUrl}}/api/recommendations/user/
+Authorization: Token {{token}}
+
+### Métriques d'interactions (totaux et dernières 24h)
+GET {{baseUrl}}/api/metrics/
+Authorization: Token {{token}}
+
+### ===========================================
+### SCÉNARIO 7: Onboarding préférences + A/B Testing + Recherche
+### ===========================================
+
+### Enregistrer des préférences utilisateur (onboarding)
+POST {{baseUrl}}/api/onboarding/preferences/
+Authorization: Token {{token}}
+Content-Type: {{contentType}}
+
+{
+  "liked_categories": ["Smartphones", "Laptops"],
+  "liked_brands": ["Samsung", "Apple"],
+  "price_min": 10000,
+  "price_max": 80000
+}
+
+### Récupérer les préférences
+GET {{baseUrl}}/api/onboarding/preferences/
+Authorization: Token {{token}}
+
+### Recommandations produit - stratégie content
+GET {{baseUrl}}/api/products/P002/recommendations/?strategy=content
+
+### Recommandations produit - stratégie collaborative
+GET {{baseUrl}}/api/products/P002/recommendations/?strategy=collaborative
+
+### Recommandations produit - stratégie hybrid (boost popularité)
+GET {{baseUrl}}/api/products/P002/recommendations/?strategy=hybrid
+
+### Recommandations personnalisées - stratégie content
+GET {{baseUrl}}/api/recommendations/user/?strategy=content
+Authorization: Token {{token}}
+
+
+### Recommandations personnalisées - stratégie hybrid
+GET {{baseUrl}}/api/recommendations/user/?strategy=hybrid
+Authorization: Token {{token}}
+
+### Recherche sémantique
+GET {{baseUrl}}/api/search/?q=iphone%2013
+
+### ===========================================
+### SCÉNARIO 8: Administration (config, métriques, debug, retrain)
+### ===========================================
+
+### Lire la configuration du moteur (admin)
+GET {{baseUrl}}/api/admin/config/
+Authorization: Token {{adminToken}}
+
+### Mettre à jour la configuration (admin)
+POST {{baseUrl}}/api/admin/config/
+Authorization: Token {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "popularity_weight": 0.08,
+  "preference_bonus_category": 0.06,
+  "preference_bonus_brand": 0.04,
+  "preference_bonus_price": 0.05,
+  "default_strategy": "collaborative"
+}
+
+### Relancer l'entraînement du moteur (admin)
+POST {{baseUrl}}/api/admin/retrain/
+Authorization: Token {{adminToken}}
+
+### Métriques détaillées (admin)
+GET {{baseUrl}}/api/admin/metrics/
+Authorization: Token {{adminToken}}
+
+### Debug recommandations pour un produit (admin)
+GET {{baseUrl}}/api/admin/reco-debug/?itemid=P002
+Authorization: Token {{adminToken}}
+
+### Recommandations par utilisateur - stratégie content (admin)
+GET {{baseUrl}}/api/admin/user-recommendations/?user_id=1&strategy=content
+Authorization: Token {{adminToken}}
+
+
+### Recommandations par utilisateur - stratégie hybrid (admin)
+GET {{baseUrl}}/api/admin/user-recommendations/?user_id=1&strategy=hybrid
+Authorization: Token {{adminToken}}
+
+### Liste des utilisateurs avec stats (admin)
+GET {{baseUrl}}/api/admin/users/?page=1&page_size=20
+Authorization: Token {{adminToken}}
+
+### Liste des utilisateurs avec recherche (admin)
+GET {{baseUrl}}/api/admin/users/?page=1&page_size=20&search=admin
+Authorization: Token {{adminToken}}
+
+### Timeline des interactions (admin)
+GET {{baseUrl}}/api/admin/interactions/?page=1&page_size=50
+Authorization: Token {{adminToken}}
+
+### Timeline des interactions avec filtres (admin)
+GET {{baseUrl}}/api/admin/interactions/?page=1&page_size=50&type=view&user_id=1
+Authorization: Token {{adminToken}}
+
+### Timeline des interactions avec date range (admin)
+GET {{baseUrl}}/api/admin/interactions/?page=1&page_size=50&start_date=2025-11-01T00:00:00Z&end_date=2025-11-11T23:59:59Z
+Authorization: Token {{adminToken}}
+
+### Statistiques temporelles - par jour (admin)
+GET {{baseUrl}}/api/admin/stats/temporal/?period=day&days=7
+Authorization: Token {{adminToken}}
+
+### Statistiques temporelles - par semaine (admin)
+GET {{baseUrl}}/api/admin/stats/temporal/?period=week&days=30
+Authorization: Token {{adminToken}}
+
+### Statistiques temporelles - par mois (admin)
+GET {{baseUrl}}/api/admin/stats/temporal/?period=month&days=90
+Authorization: Token {{adminToken}}
+
+### ===========================================
+### SCÉNARIO 9: Collaborative Filtering Item-Based - Tests API
+### ===========================================
+### IMPORTANT: Le modèle Collaborative Filtering Item-Based doit être initialisé avant de tester ces endpoints
+### Pour initialiser le modèle CF, exécutez:
+### python manage.py init_recommender --collaborative-only
+### OU utilisez l'endpoint admin ci-dessous pour réentraîner le modèle
+### NOTE: Le CF supporte uniquement les recommandations par produit (Item-Based), pas par utilisateur
+
+### Vérifier si le modèle CF est disponible (admin)
+GET {{baseUrl}}/api/admin/cf/stats/
+Authorization: Token {{adminToken}}
+
+### Réentraîner le modèle CF Item-Based avec paramètres par défaut (admin)
+POST {{baseUrl}}/api/admin/cf/retrain/
+Authorization: Token {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "sample_ratio": 1.0,
+  "min_interactions": 2
+}
+
+### Attendre quelques secondes que le modèle soit entraîné, puis vérifier à nouveau
+GET {{baseUrl}}/api/admin/cf/stats/
+Authorization: Token {{adminToken}}
+
+### Recommandations produit - stratégie collaborative Item-Based (utilisateur)
+GET {{baseUrl}}/api/products/3/recommendations/?strategy=collaborative
+
+### Statistiques du modèle Collaborative Filtering (admin)
+### Vérifier l'état du modèle avant de tester les autres endpoints
+GET {{baseUrl}}/api/admin/cf/stats/
+Authorization: Token {{adminToken}}
+
+### Recommandations CF Item-Based pour un produit spécifique (admin)
+GET {{baseUrl}}/api/admin/cf/product-recommendations/?itemid=2&top_n=10
+Authorization: Token {{adminToken}}
+
+### Recommandations CF Item-Based pour un produit avec top_n personnalisé (admin)
+GET {{baseUrl}}/api/admin/cf/product-recommendations/?itemid=1&top_n=90
+Authorization: Token {{adminToken}}
+
+### Debug CF Item-Based pour un produit (admin)
+GET {{baseUrl}}/api/admin/cf/debug/?itemid=2&top_n=10
+Authorization: Token {{adminToken}}
+
+### NOTE: Les recommandations CF par utilisateur (user-based) ne sont plus disponibles
+### Le modèle supporte uniquement les recommandations Item-Based par produit
+
+### Réentraîner le modèle CF avec paramètres personnalisés (admin)
+POST {{baseUrl}}/api/admin/cf/retrain/
+Authorization: Token {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "sample_ratio": 0.5,
+  "min_interactions": 3,
+  "max_events": 500000
+}
+
+### Réentraîner le modèle CF avec échantillonnage minimal (admin)
+POST {{baseUrl}}/api/admin/cf/retrain/
+Authorization: Token {{adminToken}}
+Content-Type: {{contentType}}
+
+{
+  "sample_ratio": 0.1,
+  "min_interactions": 1
+}
+
+### ===========================================
+### SCÉNARIO 10: Comparaison des stratégies de recommandation
+### ===========================================
+
+### Comparer Content-Based vs Collaborative vs Hybrid pour un produit
+### Content-Based
+GET {{baseUrl}}/api/products/P002/recommendations/?strategy=content
+
+### Collaborative Filtering Item-Based
+GET {{baseUrl}}/api/products/6/recommendations/?strategy=collaborative
+
+### Hybrid
+GET {{baseUrl}}/api/products/P002/recommendations/?strategy=hybrid
+
+### Comparer pour un utilisateur (nécessite auth)
+### Content-Based
+GET {{baseUrl}}/api/recommendations/user/?strategy=content
+Authorization: Token {{token}}
+
+### Hybrid
+GET {{baseUrl}}/api/recommendations/user/?strategy=hybrid
+Authorization: Token {{token}}
+
+### ===========================================
+### SCÉNARIO 11: Produits recommandés selon le modèle choisi (Admin Dashboard)
+### ===========================================
+
+### Récupérer les produits recommandés avec le modèle par défaut (16 produits par défaut)
+GET {{baseUrl}}/api/admin/recommendations/products/
+Authorization: Token {{adminToken}}
+
+### Récupérer les produits recommandés avec le modèle Content-Based (16 produits)
+GET {{baseUrl}}/api/admin/recommendations/products/?model=content&limit=16
+Authorization: Token {{adminToken}}
+
+### Récupérer les produits recommandés avec le modèle Collaborative Filtering (16 produits)
+GET {{baseUrl}}/api/admin/recommendations/products/?model=collaborative&limit=16
+Authorization: Token {{adminToken}}
+
+### Récupérer les produits recommandés avec le modèle Hybride (16 produits: 50% CB + 50% CF)
+GET {{baseUrl}}/api/admin/recommendations/products/?model=hybrid&limit=16
+Authorization: Token {{adminToken}}
+
+### Récupérer plus de produits recommandés (bouton "voir plus") - Content-Based
+GET {{baseUrl}}/api/admin/recommendations/products/?model=content&limit=32
+Authorization: Token {{adminToken}}
+
+### Récupérer plus de produits recommandés (bouton "voir plus") - Collaborative Filtering
+GET {{baseUrl}}/api/admin/recommendations/products/?model=collaborative&limit=32
+Authorization: Token {{adminToken}}
+
+### Récupérer plus de produits recommandés (bouton "voir plus") - Hybride (32 produits: 16 CB + 16 CF)
+GET {{baseUrl}}/api/admin/recommendations/products/?model=hybrid&limit=32
+Authorization: Token {{adminToken}}
+
+### Récupérer les produits recommandés avec un produit source spécifique
+GET {{baseUrl}}/api/admin/recommendations/products/?model=content&source_itemid=P001&limit=16
+Authorization: Token {{adminToken}}
+
+### Récupérer les produits recommandés avec un produit source spécifique (Hybride)
+GET {{baseUrl}}/api/admin/recommendations/products/?model=hybrid&source_itemid=P002&limit=16
+Authorization: Token {{adminToken}}
+
+### ===========================================
+### SCÉNARIO 12: Recommandations utilisateur avec historique et deux modèles (CB + CF)
+### ===========================================
+### NOUVEAU ENDPOINT: Recommandations personnalisées utilisant l'historique utilisateur
+### et combinant les deux modèles (Content-Based + Collaborative Filtering)
+
+### 1. Recommandations utilisateur hybride (par défaut: utilise historique + CB + CF)
+### L'endpoint utilise l'historique de l'utilisateur (produits vus/achetés/aimés)
+### Pour chaque produit de l'historique, récupère les recommandations CB et CF
+### Combine les deux modèles (50% CB + 50% CF) et applique les préférences utilisateur
+GET {{baseUrl}}/api/recommendations/user/hybrid/
+Authorization: Token {{token}}
+
+### 2. Recommandations utilisateur hybride avec limite personnalisée (32 produits)
+GET {{baseUrl}}/api/recommendations/user/hybrid/?limit=32
+Authorization: Token {{token}}
+
+### 3. Recommandations utilisateur avec stratégie Content-Based uniquement
+### Utilise uniquement le modèle Content-Based basé sur l'historique
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=content&limit=16
+Authorization: Token {{token}}
+
+### 4. Recommandations utilisateur avec stratégie Collaborative Filtering uniquement
+### Utilise uniquement le modèle CF basé sur l'historique
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=collaborative&limit=16
+Authorization: Token {{token}}
+
+### 5. Recommandations utilisateur avec stratégie Hybride explicite (CB + CF)
+### Combine les deux modèles pour chaque produit de l'historique
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=hybrid&limit=16
+Authorization: Token {{token}}
+
+### 6. Test avec un utilisateur ayant plusieurs interactions
+### (Assurez-vous d'avoir des interactions enregistrées pour cet utilisateur)
+### L'endpoint utilisera les 10 dernières interactions pour générer les recommandations
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=hybrid&limit=20
+Authorization: Token {{token}}
+
+### 7. Comparaison: ancien endpoint vs nouveau endpoint hybride
+### Ancien endpoint (utilise seulement CB avec historique)
+GET {{baseUrl}}/api/recommendations/user/?strategy=content
+Authorization: Token {{token}}
+
+### Nouveau endpoint hybride (utilise CB + CF avec historique)
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=hybrid
+Authorization: Token {{token}}
+
+### ===========================================
+### SCÉNARIO 13: Auto-initialisation du modèle CF au démarrage
+### ===========================================
+### Le modèle CF s'initialise automatiquement en arrière-plan au démarrage du serveur
+### Si le modèle n'est pas encore initialisé, vous verrez un message approprié
+### L'initialisation se fait automatiquement si des événements sont présents dans MongoDB
+
+### Vérifier l'état du modèle CF (doit être initialisé automatiquement au démarrage)
+GET {{baseUrl}}/api/admin/cf/stats/
+Authorization: Token {{adminToken}}
+
+### Tester les recommandations CF (le modèle devrait être disponible après auto-init)
+GET {{baseUrl}}/api/admin/recommendations/products/?model=collaborative&limit=16
+Authorization: Token {{adminToken}}
+
+### Si le modèle est en cours d'initialisation, vous verrez un message "initializing"
+### Sinon, si non initialisé, vous verrez "not_initialized"
+### Une fois initialisé, les recommandations fonctionneront normalement
+
+### ===========================================
+### SCÉNARIO 14: Tests des améliorations de pertinence des recommandations
+### ===========================================
+### NOUVELLES FONCTIONNALITÉS:
+### - Exclusion des produits déjà vus/achetés
+### - Diversité (max produits par catégorie)
+### - Pondération temporelle (interactions récentes x2)
+### - Cold start amélioré avec préférences onboarding
+
+### 1. Test recommandations utilisateur hybride avec améliorations
+### Vérifier que les produits de l'historique sont exclus
+### Vérifier la diversité des catégories
+### Vérifier la pondération temporelle (interactions récentes)
+### La réponse inclut: excluded_products_count, diversity_applied, max_per_category
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=hybrid&limit=20
+Authorization: Token {{token}}
+
+### 2. Test recommandations produit avec exclusion du produit source
+### Vérifier que le produit consulté n'apparaît pas dans les recommandations
+### Vérifier la diversité des catégories (max 1 produit de la même catégorie)
+GET {{baseUrl}}/api/products/P001/recommendations/?strategy=hybrid
+
+### 3. Test recommandations produit avec stratégie content
+### Vérifier exclusion du produit source et diversité
+GET {{baseUrl}}/api/products/P002/recommendations/?strategy=content
+
+### 4. Test recommandations produit avec stratégie collaborative
+### Vérifier exclusion du produit source et diversité
+GET {{baseUrl}}/api/products/P003/recommendations/?strategy=collaborative
+
+### 5. Test cold start amélioré (nouvel utilisateur avec préférences)
+### Étape 1: Créer un nouvel utilisateur (voir SCÉNARIO 3)
+### Étape 2: Définir des préférences (voir SCÉNARIO 7)
+### Étape 3: Tester les recommandations (sans historique, utilise préférences)
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=hybrid&limit=16
+Authorization: Token {{token}}
+
+### 6. Comparaison avant/après améliorations
+### Tester avec un utilisateur ayant beaucoup d'interactions
+### Vérifier que les produits récemment consultés sont exclus
+### Vérifier la diversité des catégories dans les résultats
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=hybrid&limit=32
+Authorization: Token {{token}}
+
+### 7. Test de la pondération temporelle
+### Consulter des produits récemment (≤ 7 jours) et vérifier que les recommandations
+### basées sur ces interactions ont un score plus élevé (temporal_weight = 2.0)
+### Note: Les interactions récentes ont un poids x2 dans le calcul du score
+GET {{baseUrl}}/api/recommendations/user/hybrid/?strategy=hybrid&limit=16
+Authorization: Token {{token}}

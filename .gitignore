@@ -1,0 +1,106 @@
+############################################################
+# PYTHON / DJANGO
+############################################################
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv/
+.env
+*.env
+
+data/*.csv
+data/*.ipynb
+AMELIORATIONS_RECOMMANDATIONS.md
+GUIDE_ENDPOINTS_RECOMMANDATIONS.md
+*.md
+
+# Django stuff
+db.sqlite3
+db.sqlite3-journal
+
+# Static & media files (si générées automatiquement)
+staticfiles/
+media/
+static/
+build/
+
+# Django migrations (générées automatiquement)
+*/migrations/*.py
+!*/migrations/__init__.py
+
+############################################################
+# REACT / FRONTEND
+############################################################
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+dist-ssr/
+build/
+*.local
+
+############################################################
+# SYSTEM FILES
+############################################################
+
+.DS_Store
+Thumbs.db
+
+############################################################
+# EDITOR / IDE
+############################################################
+
+.vscode/
+!.vscode/extensions.json
+.idea/
+*.suo
+*.njsproj
+*.sln
+*.sw?
+
+############################################################
+# LOGS
+############################################################
+
+logs/
+*.log
+lerna-debug.log*
+
+############################################################
+# MONGO / SECRETS
+############################################################
+
+# Mongo dump / backup
+dump/
+*.bson
+*.json
+
+# Ne jamais push des credentials !
+secrets/
+*.key
+*.pem
+*.crt
+
+############################################################
+# CACHE / TEMP FILES
+############################################################
+
+*.tmp
+*.temp
+*.bak
+.cache/
+.cache-loader/
+coverage/
+*.txt
